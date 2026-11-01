@@ -15,5 +15,11 @@ service cloud.firestore {
     match /trip/info {
       allow read, write: if avantFin();
     }
+    match /gifts/{giftId} {
+      allow read, delete: if avantFin();
+      allow create, update: if avantFin()
+        && request.resource.data.title is string
+        && request.resource.data.title.size() <= 120;
+    }
   }
 }

@@ -48,7 +48,7 @@ const FIREBASE_CONFIG = {
     if(cur&&!force){setMe(cur);return;}
     $("nameInput").value=cur||"";$("nameModal").hidden=false;setTimeout(()=>$("nameInput").focus(),50);
   }
-  function setMe(n){me=n;store.set("ath-name",n);$("meName").textContent=n;render();}
+  function setMe(n){me=n;store.set("ath-name",n);$("meName").textContent=n;render();if(typeof renderGifts==="function")renderGifts();}
   $("nameForm").addEventListener("submit",e=>{e.preventDefault();const v=$("nameInput").value.trim().slice(0,30);if(!v)return;$("nameModal").hidden=true;setMe(v);});
   $("changeName").onclick=()=>askName(true);
 
@@ -63,7 +63,7 @@ const FIREBASE_CONFIG = {
     const total=plans.length,res=plans.filter(p=>p.status==="reserve").length,todo=plans.filter(p=>p.status==="encours").length;
     const st=$("stats");st.replaceChildren();
     [[total,"propositions"],[res,"réservées"],[todo,"à réserver"]].forEach(([n,l])=>{const s=el("span");s.append(el("b",null,String(n))," "+l);st.append(s);});
-    const view=plans.filter(p=>filter==="all"?true:filter==="mine"?(me&&(joined(p).includes(me)||liked(p).includes(me))):p.type===filter);
+    const view=plans.filter(p=>filter==="all"?true:filter==="mine"?(me&&liked(p).includes(me)):p.type===filter);
     const list=$("list");list.replaceChildren();
     if(!loaded){const e=el("div","empty");e.append(el("h3",null,"Chargement du programme…"),"Les propositions de la famille vont apparaître ici.");list.append(e);return;}
     if(!view.length){
@@ -127,10 +127,7 @@ const FIREBASE_CONFIG = {
     if(L.length){const r=el("div","avatars likes");r.append(el("span","thumb","👍"),bubbles(L),el("span",null,"Kiffé par "+names(L)));b.append(r);}
     if(D.length){const r=el("div","avatars likes");r.append(el("span","thumb","👎"),bubbles(D),el("span",null,"Pas chaud : "+names(D)));b.append(r);}
     if(!L.length&&!D.length)b.append(el("div","avatars","Personne n'a encore donné son avis"));
-    const f=el("div","foot"),av=el("div","avatars");
-    if(j.length)av.append(bubbles(j),el("span",null,"Viennent : "+names(j)));
-    else if(p.date)av.append(el("span",null,"Personne d'inscrit pour l'instant"));
-    f.append(av);
+    const f=el("div","foot");
     const act=el("div","actions");
     if(me){
       const up=L.includes(me),down=D.includes(me);
@@ -139,11 +136,6 @@ const FIREBASE_CONFIG = {
       const db_=el("button","btn ghost small dislike",down?"👎 Bof, pas chaud ✓":"👎 Bof, pas chaud");db_.setAttribute("aria-pressed",String(down));
       db_.onclick=()=>vote(p.id,down?null:"down");
       act.append(lb,db_);
-      if(p.date||j.length){
-        const going=j.includes(me);
-        const jb=el("button","btn ghost small join",going?"Je viens ✓":"Je viens");jb.setAttribute("aria-pressed",String(going));
-        jb.onclick=()=>toggle(p.id,"joiners",!going,going?"Retiré":"Inscrit !");act.append(jb);
-      }
     }
     const mb=el("button","btn ghost small",hasPos(p)?"📍 Voir sur la carte":"📍 Placer sur la carte");
     mb.onclick=()=>hasPos(p)?showOnMap(p):startPick({kind:"plan",id:p.id},p.title||"ce lieu",p.place||p.title||"");
@@ -298,7 +290,7 @@ const FIREBASE_CONFIG = {
     return d;
   }
   function showOnMap(p){
-    if(!map||!markers[p.id])return;
+    if(!map||!markers[p.id])return;showTab("carte");
     $("map").scrollIntoView({behavior:"smooth",block:"center"});
     map.setView([p.lat,p.lng],15);markers[p.id].openPopup();
   }
@@ -307,7 +299,7 @@ const FIREBASE_CONFIG = {
     pick.lat=lat;pick.lng=lng;$("pickSave").disabled=false;
   }
   function startPick(target,label,query){
-    if(!map){toast("La carte n'est pas disponible.");return;}
+    if(!map){toast("La carte n'est pas disponible.");return;}showTab("carte");
     pick=Object.assign({},target);$("pickTitle").textContent=`Touche la carte pour placer « ${label} », ou cherche l'adresse.`;
     $("pickQuery").value=query||"";$("pickSave").disabled=true;$("pickBar").hidden=false;
     $("pickBar").scrollIntoView({behavior:"smooth",block:"start"});
@@ -337,8 +329,70 @@ const FIREBASE_CONFIG = {
   };
   $("pinStay").onclick=()=>startPick({kind:"trip"},"le logement",trip.stay||"Lycabette");
 
+  // ---------- onglets ----------
+  const TABS=["programme","carte","cadeaux"];
+  function showTab(name){
+    if(!TABS.includes(name))name="programme";
+    TABS.forEach(t=>{$("tab-"+t).hidden=t!==name;});
+    document.querySelectorAll(".tab").forEach(a=>a.setAttribute("aria-selected",String(a.dataset.tab===name)));
+    if(location.hash!=="#"+name)history.replaceState(null,"","#"+name);
+    if(name==="carte"&&map)setTimeout(()=>{map.invalidateSize();renderMap();},50);
+  }
+  document.querySelectorAll(".tab").forEach(a=>a.addEventListener("click",e=>{e.preventDefault();showTab(a.dataset.tab);window.scrollTo({top:0});}));
+  window.addEventListener("hashchange",()=>showTab(location.hash.slice(1)));
+
+  // ---------- cadeaux ----------
+  let gifts=[],giftsLoaded=false,giftsError=false,giftDel=null;
+  function renderGifts(){
+    const box=$("giftList");box.replaceChildren();
+    if(giftsError){box.append(el("div","notice warn","Impossible de charger les listes. Il faut mettre à jour les règles Firestore pour la collection « gifts »."));return;}
+    if(!giftsLoaded){box.append(el("div","empty","Chargement des listes…"));return;}
+    const by={};gifts.forEach(g=>{(by[g.owner||"?"]=by[g.owner||"?"]||[]).push(g);});
+    const people=Object.keys(by).sort((a,b)=>a===me?-1:b===me?1:a.localeCompare(b,"fr"));
+    if(!people.length){const e=el("div","empty");e.append(el("h3",null,"Aucune liste pour l'instant"),"Ajoute ta première envie avec le formulaire au-dessus, les autres feront pareil.");box.append(e);return;}
+    people.forEach(person=>{
+      const sec=el("section","person"),h=el("h3");
+      const bub=el("span","bubble",initials(person));bub.style.setProperty("--h",hue(person));bub.style.marginLeft="0";
+      h.append(bub,person===me?"Ma liste":"La liste de "+person);sec.append(h);
+      by[person].sort((a,b)=>(a.createdAt||"").localeCompare(b.createdAt||"")).forEach(g=>{
+        const mine=person===me,taken=!!g.takenBy&&!mine;
+        const c=el("article","gift"+(taken?" taken":""));
+        c.append(el("div","gt",g.title||"Sans titre"));
+        const bits=[g.price,g.note].filter(Boolean).join(" · ");if(bits)c.append(el("div","meta",bits));
+        const u=g.link&&safeUrl(g.link);if(u){const a=el("a","link","Voir le produit ↗");a.href=u;a.target="_blank";a.rel="noopener noreferrer";c.append(a);}
+        const act=el("div","actions");
+        if(mine){
+          if(giftDel===g.id){
+            const y=el("button","btn ghost small del","Confirmer la suppression");y.onclick=async()=>{giftDel=null;try{await fs.collection("gifts").doc(g.id).delete();toast("Retiré de ta liste");}catch(e){toast("Suppression impossible");}};
+            const n=el("button","btn ghost small","Garder");n.onclick=()=>{giftDel=null;renderGifts();};act.append(y,n);
+          }else{const d=el("button","btn ghost small del","Retirer");d.onclick=()=>{giftDel=g.id;renderGifts();};act.append(d);}
+        }else if(g.takenBy){
+          if(g.takenBy===me){c.append(el("div","offered","🎁 Tu l'offres"));const x=el("button","btn ghost small","Je ne l'offre plus");x.onclick=()=>setTaken(g.id,"");act.append(x);}
+          else c.append(el("div","offered","🎁 Offert par "+g.takenBy));
+        }else if(me){const o=el("button","btn small","🎁 Je l'offre");o.onclick=()=>setTaken(g.id,me);act.append(o);}
+        if(act.children.length)c.append(act);
+        sec.append(c);
+      });
+      box.append(sec);
+    });
+  }
+  async function setTaken(id,who){
+    try{await fs.collection("gifts").doc(id).update({takenBy:who});toast(who?"Noté, c'est toi qui l'offres 🎁":"C'est noté");}
+    catch(e){console.error(e);toast("Enregistrement impossible, réessaie.");}
+  }
+  $("giftForm").addEventListener("submit",async ev=>{
+    ev.preventDefault();if(!fs||!me)return;
+    const t=$("gTitle").value.trim();if(!t)return;const lk=$("gLink").value.trim();
+    $("gSubmit").disabled=true;
+    try{await fs.collection("gifts").add({owner:me,title:t,price:$("gPrice").value.trim(),link:lk&&safeUrl(lk)?lk:"",note:$("gNote").value.trim(),takenBy:"",createdAt:new Date().toISOString()});
+      ["gTitle","gPrice","gLink","gNote"].forEach(i=>$(i).value="");toast("Ajouté à ta liste 🎄");}
+    catch(e){console.error(e);toast("Ajout impossible. Les règles Firestore sont-elles à jour ?");}
+    $("gSubmit").disabled=false;
+  });
+
   // ---------- démarrage ----------
   initMap();
+  showTab(location.hash.slice(1));
   async function seedIfNew(){
     const ref=fs.collection("trip").doc("info");const s=await ref.get();
     if(s.exists)return;
@@ -354,6 +408,8 @@ const FIREBASE_CONFIG = {
     fs.collection("plans").onSnapshot(snap=>{clearTimeout(timer);notice("");plans=snap.docs.map(d=>Object.assign({id:d.id},d.data()));loaded=true;render();},
       err=>{clearTimeout(timer);loaded=true;notice("Impossible de charger le programme. Vérifie les règles Firestore.",true);console.error(err);render();});
     fs.collection("trip").doc("info").onSnapshot(s=>{trip=s.exists?s.data():{};renderTrip();renderMap();},()=>{});
+    fs.collection("gifts").onSnapshot(snap=>{gifts=snap.docs.map(d=>Object.assign({id:d.id},d.data()));giftsLoaded=true;renderGifts();},
+      err=>{console.error(err);giftsLoaded=true;giftsError=true;renderGifts();});
   });
   renderTrip();
 })();

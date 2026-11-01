@@ -149,6 +149,25 @@ textarea{resize:vertical;min-height:60px}
 .wiznav{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .wizfields{display:flex;flex-direction:column;gap:10px}
 .dislike[aria-pressed="true"]{background:var(--ochre-soft);color:var(--ochre);border-color:transparent}
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;background:var(--bg);padding-block:6px;border-bottom:1px solid var(--line)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.tab{text-align:center;padding:10px 6px;border-radius:10px;font-weight:600;font-size:14px;color:var(--muted);text-decoration:none}
+.tab[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 0 0 1px var(--line)}
+.tabpanel{display:flex;flex-direction:column;gap:18px}
+.tabpanel[hidden]{display:none!important}
+#map{height:min(62vh,560px)}
+.giftintro h2{font-size:26px}
+.giftintro p{margin:6px 0 0}
+.giftform{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.giftrow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (max-width:420px){.giftrow{grid-template-columns:minmax(0,1fr)}}
+#giftList{display:flex;flex-direction:column;gap:22px}
+.person{display:flex;flex-direction:column;gap:8px}
+.person h3{font-size:20px;display:flex;align-items:center;gap:8px}
+.gift{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.gift.taken{opacity:.75}
+.gift .gt{font-weight:600;overflow-wrap:anywhere}
+.offered{font-size:13px;font-weight:600;color:var(--olive)}
 </style>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 </head>
@@ -173,6 +192,38 @@ textarea{resize:vertical;min-height:60px}
 
   <div id="notice" class="notice" hidden></div>
 
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <a class="tab" href="#programme" data-tab="programme">📅 Programme</a>
+    <a class="tab" href="#carte" data-tab="carte">🗺️ Carte</a>
+    <a class="tab" href="#cadeaux" data-tab="cadeaux">🎁 Cadeaux</a>
+  </nav>
+
+  <div class="tabpanel" id="tab-programme">
+  <div class="toolbar">
+    <div class="chips" role="group" aria-label="Filtrer">
+      <button class="chip" data-f="all" aria-pressed="true">Tout</button>
+      <button class="chip" data-f="resto" aria-pressed="false">Restos</button>
+      <button class="chip" data-f="activite" aria-pressed="false">Activités</button>
+      <button class="chip" data-f="visite" aria-pressed="false">Visites</button>
+      <button class="chip" data-f="mine" aria-pressed="false">Mes kiffs</button>
+    </div>
+    <button class="btn big" id="openForm">✨ J'ai une idée cool</button>
+  </div>
+
+  <section class="wizard" id="wizard" hidden aria-live="polite">
+    <div class="wizhead">
+      <div class="dots" id="wizDots"><span></span><span></span><span></span><span></span></div>
+      <button type="button" class="linkbtn" id="wizClose">Fermer</button>
+    </div>
+    <div id="wizBody"></div>
+  </section>
+
+  <main id="list">
+    <div class="empty"><h3>Chargement du programme…</h3>Les propositions de la famille vont apparaître ici.</div>
+  </main>
+  </div>
+
+  <div class="tabpanel" id="tab-carte" hidden>
   <section class="mapbox" aria-label="Carte des lieux">
     <div class="pickbar" id="pickBar" hidden>
       <div class="picktitle" id="pickTitle">Touche la carte pour placer le lieu</div>
@@ -189,29 +240,25 @@ textarea{resize:vertical;min-height:60px}
     <div id="map"></div>
     <div class="legend"><span>🏠 Logement</span><span>🍽️ Resto</span><span>⭐ Activité</span><span>🏛️ Visite</span><span>🍸 Autre</span></div>
   </section>
-
-  <div class="toolbar">
-    <div class="chips" role="group" aria-label="Filtrer">
-      <button class="chip" data-f="all" aria-pressed="true">Tout</button>
-      <button class="chip" data-f="resto" aria-pressed="false">Restos</button>
-      <button class="chip" data-f="activite" aria-pressed="false">Activités</button>
-      <button class="chip" data-f="visite" aria-pressed="false">Visites</button>
-      <button class="chip" data-f="mine" aria-pressed="false">Où je vais</button>
-    </div>
-    <button class="btn big" id="openForm">✨ J'ai une idée cool</button>
   </div>
 
-  <section class="wizard" id="wizard" hidden aria-live="polite">
-    <div class="wizhead">
-      <div class="dots" id="wizDots"><span></span><span></span><span></span><span></span></div>
-      <button type="button" class="linkbtn" id="wizClose">Fermer</button>
+  <div class="tabpanel" id="tab-cadeaux" hidden>
+    <div class="giftintro">
+      <h2>Cadeaux de Noël</h2>
+      <p class="meta">Chacun note ses envies. Tu vois les listes de tout le monde et tu peux dire « Je l'offre » pour éviter les doublons. Sur ta propre liste, tu ne vois pas qui offre quoi : surprise garantie.</p>
     </div>
-    <div id="wizBody"></div>
-  </section>
-
-  <main id="list">
-    <div class="empty"><h3>Chargement du programme…</h3>Les propositions de la famille vont apparaître ici.</div>
-  </main>
+    <form class="giftform" id="giftForm">
+      <div class="wizsub">Ajouter à ma liste</div>
+      <label for="gTitle">Mon envie<input id="gTitle" maxlength="120" required placeholder="Ex. Un pull en laine, un livre de recettes…"></label>
+      <div class="giftrow">
+        <label for="gPrice">Prix environ<input id="gPrice" maxlength="30" placeholder="≈ 30 €"></label>
+        <label for="gLink">Lien (facultatif)<input id="gLink" type="url" maxlength="400" placeholder="https://…"></label>
+      </div>
+      <label for="gNote">Précisions (taille, couleur…)<input id="gNote" maxlength="200" placeholder="Taille M, plutôt bleu"></label>
+      <div class="formactions"><button class="btn" type="submit" id="gSubmit">Ajouter à ma liste</button></div>
+    </form>
+    <div id="giftList"></div>
+  </div>
 </div>
 <div class="toast" id="toast" hidden></div>
 
