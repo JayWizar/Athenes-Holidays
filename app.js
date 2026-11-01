@@ -95,7 +95,7 @@ window.addEventListener("error",e=>{const n=document.getElementById("notice");if
   function editCard(p){
     const f=el("form","add");f.style.gridColumn="1/-1";
     f.append(field("Quoi ?","title","text",true),field("Type","type",null,false,TYPES),field("Statut","status",null,false,{idee:"Idée",encours:"À réserver",reserve:"Réservé"}),
-      field("Jour","date","date"),field("Heure","time","time"),field("Lieu","place"),field("Qui organise ?","who"),
+      field("Jour","date","date"),field("Heure","time","time"),field("Lieu","place"),field("Proposé par","who"),
       field("Prix indicatif","price"),field("Lien","link","url"),field("Infos utiles","note","textarea",true));
     const a=el("div","formactions");
     const cx=el("button","btn ghost","Annuler");cx.type="button";cx.onclick=()=>{editingId=null;draft=null;render();};
@@ -116,10 +116,13 @@ window.addEventListener("error",e=>{const n=document.getElementById("notice");if
     c.append(el("div","time"+(p.time?"":" none"),p.time||MOMENTS[p.moment]||"—"));
     const b=el("div","body"),j=joined(p),L=liked(p);
     const r1=el("div","row");r1.append(el("span","tag",TYPES[p.type]||"Autre"),el("span","title",p.title||"Sans titre"));b.append(r1);
+    const by=p.who||p.createdBy;
+    if(by){const pb=el("div","by");const bub=el("span","bubble",initials(by));bub.style.setProperty("--h",hue(by));bub.style.marginLeft="0";
+      pb.append(bub,el("span",null,"Proposé par "),el("b",null,by===me?"toi":by));b.append(pb);}
     const st=el("button","status st-"+(p.status||"idee"),STATUS[p.status]||"Idée");st.title="Changer le statut";
     st.onclick=()=>write(p.id,{status:NEXT[p.status||"idee"]},"Statut mis à jour");
     const r2=el("div","row");r2.append(st);
-    const bits=[p.genre,p.place,p.who?("organisé par "+p.who):"",p.price].filter(Boolean).join(" · ");
+    const bits=[p.genre,p.place,p.price].filter(Boolean).join(" · ");
     if(bits)r2.append(el("span","meta",bits));b.append(r2);
     if(p.note)b.append(el("div","note",p.note));
     const u=p.link&&safeUrl(p.link);
@@ -305,7 +308,7 @@ window.addEventListener("error",e=>{const n=document.getElementById("notice");if
     }
     plans.filter(hasPos).forEach(p=>{
       const when=[p.date?fmtShort(p.date):"",p.time].filter(Boolean).join(" · ");
-      const m=addPin(p.lat,p.lng,ICON[p.type]||"📍","",popup(p.title||"",when||p.place||"",p.id));
+      const m=addPin(p.lat,p.lng,ICON[p.type]||"📍","",popup(p.title||"",[when||p.place||"",(p.who||p.createdBy)?"💡 "+(p.who||p.createdBy):""].filter(Boolean).join(" · "),p.id));
       markers[p.id]=m;allMarkers.push(m);pts.push([p.lng,p.lat]);
     });
     const box=$("map");
@@ -414,7 +417,8 @@ window.addEventListener("error",e=>{const n=document.getElementById("notice");if
     const emoji=ICON[p.type]||"✨";
     const when=[p.date?fmtDay(p.date):"",p.time||MOMENTS[p.moment]||""].filter(Boolean).join(", ");
     const url=SITE+"#idee-"+p.id;
-    const txt=`${emoji} Idée pour Athènes : ${p.title}${p.place?" ("+p.place+")":""}${when?"\n🗓️ "+when:""}\n\nTu kiffes ou pas chaud ? Vote ici 👇\n${url}`;
+    const by=p.who||p.createdBy;
+    const txt=`${emoji} Idée pour Athènes : ${p.title}${p.place?" ("+p.place+")":""}${by?"\n💡 Proposée par "+by:""}${when?"\n🗓️ "+when:""}\n\nTu kiffes ou pas chaud ? Vote ici 👇\n${url}`;
     try{if(navigator.share){await navigator.share({text:txt});return;}}catch(e){if(e&&e.name==="AbortError")return;}
     window.open("https://wa.me/?text="+encodeURIComponent(txt),"_blank","noopener");
   }
