@@ -197,6 +197,10 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .by{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
 .by .bubble{width:20px;height:20px;font-size:9px;border:0}
 .by b{color:var(--ink);font-weight:600}
+.pop .addr{display:block;margin-top:6px;font-size:13px;color:var(--aegean);text-decoration:none;overflow-wrap:anywhere}
+.pop .addr:hover{text-decoration:underline}
+.maplinks{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.maplink{font-size:12px;font-weight:600;padding:5px 9px;border-radius:8px;border:1px solid var(--line);color:var(--ink);text-decoration:none;background:var(--bg)}
 </style>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.min.css">
 </head>
@@ -315,6 +319,6 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.min.js"></script>
-<script src="app.js?v=12"></script>
+<script src="app.js?v=13"></script>
 </body>
 </html>

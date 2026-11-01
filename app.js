@@ -297,17 +297,17 @@ window.addEventListener("error",e=>{const n=document.getElementById("notice");if
   }
   function addPin(lat,lng,emoji,cls,popNode){
     const m=new maplibregl.Marker({element:pinEl(emoji,cls),anchor:"bottom"}).setLngLat([lng,lat]);
-    if(popNode)m.setPopup(new maplibregl.Popup({offset:30,closeButton:true,maxWidth:"240px"}).setDOMContent(popNode));
+    if(popNode){const pp=new maplibregl.Popup({offset:30,closeButton:true,maxWidth:"240px"}).setDOMContent(popNode);if(popNode._load)pp.on("open",()=>popNode._load());m.setPopup(pp);}
     m.addTo(map);return m;
   }
   function renderMap(){
     if(!map)return;allMarkers.forEach(m=>m.remove());allMarkers=[];markers={};const pts=[];
     if(hasPos({lat:trip.stayLat,lng:trip.stayLng})){
-      allMarkers.push(addPin(trip.stayLat,trip.stayLng,"🏠","home",popup("Logement",trip.stay||"")));pts.push([trip.stayLng,trip.stayLat]);
+      allMarkers.push(addPin(trip.stayLat,trip.stayLng,"🏠","home",popup("Logement",trip.stay||"",null,trip.stayLat,trip.stayLng,trip.stayAddress)));pts.push([trip.stayLng,trip.stayLat]);
     }
     plans.filter(hasPos).forEach(p=>{
       const when=[p.date?fmtShort(p.date):"",p.time].filter(Boolean).join(" · ");
-      const m=addPin(p.lat,p.lng,ICON[p.type]||"📍","",popup(p.title||"",[when||p.place||"",(p.who||p.createdBy)?"💡 "+(p.who||p.createdBy):""].filter(Boolean).join(" · "),p.id));
+      const m=addPin(p.lat,p.lng,ICON[p.type]||"📍","",popup(p.title||"",[when||p.place||"",(p.who||p.createdBy)?"💡 "+(p.who||p.createdBy):""].filter(Boolean).join(" · "),p.id,p.lat,p.lng,p.address));
       markers[p.id]=m;allMarkers.push(m);pts.push([p.lng,p.lat]);
     });
     const box=$("map");
@@ -316,8 +316,25 @@ window.addEventListener("error",e=>{const n=document.getElementById("notice");if
       map.fitBounds(bb,{padding:50,maxZoom:14,duration:0});fitted=true;
     }
   }
-  function popup(title,sub,id){
+  const gmaps=(lat,lng)=>`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+  const amaps=(lat,lng,name)=>`https://maps.apple.com/?ll=${lat},${lng}&q=${encodeURIComponent(name||"Lieu")}`;
+  async function reverseAddr(lat,lng){
+    try{const j=await (await fetch(`https://photon.komoot.io/reverse?lat=${lat}&lon=${lng}&lang=fr&limit=1`)).json();
+      const p=(j.features&&j.features[0]&&j.features[0].properties)||{};
+      return [p.street?(p.street+(p.housenumber?" "+p.housenumber:"")):p.name,p.district||p.locality,p.city].filter(Boolean).join(", ");}catch(e){return "";}
+  }
+  function popup(title,sub,id,lat,lng,address){
     const d=el("div","pop");d.append(el("b",null,title));if(sub)d.append(el("span",null,sub));
+    if(typeof lat==="number"){
+      const ad=el("a","addr",address||"Voir l'adresse");ad.href=gmaps(lat,lng);ad.target="_blank";ad.rel="noopener";d.append(ad);
+      if(!address){let done=false;d._load=go;
+        async function go(){if(done)return;done=true;const a=await reverseAddr(lat,lng);if(a)ad.textContent="📍 "+a;}}
+      else ad.textContent="📍 "+address;
+      const links=el("div","maplinks");
+      const g=el("a","maplink","Google Maps ↗");g.href=gmaps(lat,lng);g.target="_blank";g.rel="noopener";
+      const ap=el("a","maplink","Plans (iPhone) ↗");ap.href=amaps(lat,lng,title);ap.target="_blank";ap.rel="noopener";
+      links.append(g,ap);d.append(links);
+    }
     if(id){const a=el("button","linkbtn","Voir la proposition");a.style.display="block";a.style.marginTop="6px";
       a.onclick=()=>{showTab("programme");setTimeout(()=>{const c=document.getElementById("card-"+id);if(c)c.scrollIntoView({behavior:"smooth",block:"center"});},60);};d.append(a);}
     return d;
@@ -328,7 +345,7 @@ window.addEventListener("error",e=>{const n=document.getElementById("notice");if
   }
   function setDraft(lat,lng){
     if(draftMarker)draftMarker.setLngLat([lng,lat]);else draftMarker=new maplibregl.Marker({element:pinEl("📍","draft"),anchor:"bottom"}).setLngLat([lng,lat]).addTo(map);
-    pick.lat=lat;pick.lng=lng;$("pickSave").disabled=false;
+    pick.lat=lat;pick.lng=lng;pick.address="";$("pickSave").disabled=false;
   }
   function startPick(target,label,query){
     if(!map){toast("La carte n'est pas disponible.");return;}showTab("carte");
@@ -347,7 +364,7 @@ window.addEventListener("error",e=>{const n=document.getElementById("notice");if
     return null;
   }
   function placeQuery(q){const m=q.match(/\/maps\/place\/([^/@?]+)/);return m?decodeURIComponent(m[1].replace(/\+/g," ")):null;}
-  function pickResult(r){setDraft(r.lat,r.lng);map.jumpTo({center:[r.lng,r.lat],zoom:16});$("pickResults").hidden=true;}
+  function pickResult(r){setDraft(r.lat,r.lng);pick.address=[r.name,r.sub].filter(Boolean).join(", ");map.jumpTo({center:[r.lng,r.lat],zoom:16});$("pickResults").hidden=true;}
   function showResults(list){
     const box=$("pickResults");box.replaceChildren();
     list.forEach(r=>{const b=el("button","result");b.type="button";b.append(el("b",null,r.name),el("span",null,r.sub||""));b.onclick=()=>pickResult(r);box.append(b);});
@@ -368,7 +385,7 @@ window.addEventListener("error",e=>{const n=document.getElementById("notice");if
   $("pickSearch").addEventListener("submit",async e=>{
     e.preventDefault();let q=$("pickQuery").value.trim();if(!q)return;
     const c=parseCoords(q);
-    if(c){pickResult(c);toast("Position récupérée 📍");return;}
+    if(c){pickResult({lat:c.lat,lng:c.lng});pick.address="";toast("Position récupérée 📍");return;}
     if(/maps\.app\.goo\.gl|goo\.gl\/maps/i.test(q)){toast("Ce lien court ne contient pas la position : copie plutôt les coordonnées (appui long dans Google Maps), ou tape le nom du lieu.");return;}
     const pq=placeQuery(q);if(pq)q=pq;
     $("pickGo").disabled=true;$("pickGo").textContent="…";
@@ -381,10 +398,10 @@ window.addEventListener("error",e=>{const n=document.getElementById("notice");if
   });
   $("pickSave").onclick=async()=>{
     if(!pick||typeof pick.lat!=="number")return;
-    const {lat,lng}=pick;
+    const {lat,lng}=pick;const address=pick.address||await reverseAddr(lat,lng);
     try{
-      if(pick.kind==="trip")await fs.collection("trip").doc("info").set({stayLat:lat,stayLng:lng},{merge:true});
-      else await fs.collection("plans").doc(pick.id).update({lat,lng});
+      if(pick.kind==="trip")await fs.collection("trip").doc("info").set({stayLat:lat,stayLng:lng,stayAddress:address},{merge:true});
+      else await fs.collection("plans").doc(pick.id).update({lat,lng,address});
       toast("Lieu enregistré");
     }catch(err){toast("Enregistrement impossible, réessaie.");}
     endPick();
