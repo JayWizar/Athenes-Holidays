@@ -9,6 +9,7 @@ const FIREBASE_CONFIG = {
 };
 // ==============================================================================================
 
+window.addEventListener("error",e=>{const n=document.getElementById("notice");if(n){n.textContent="Un problème technique est survenu : "+(e.message||"erreur inconnue")+". Fais une capture et envoie-la à Julio.";n.className="notice warn";n.hidden=false;}});
 (function(){
   const TYPES={resto:"Resto",activite:"Activité",visite:"Visite",autre:"Autre"};
   const STATUS={idee:"Idée",encours:"À réserver",reserve:"Réservé ✓"};
@@ -299,7 +300,8 @@ const FIREBASE_CONFIG = {
       const m=L.marker([p.lat,p.lng],{icon:pinIcon(ICON[p.type]||"📍")}).bindPopup(popup(p.title||"",when||p.place||"",p.id)).addTo(layer);
       markers[p.id]=m;pts.push([p.lat,p.lng]);
     });
-    if(!fitted&&pts.length>1){map.fitBounds(pts,{padding:[30,30],maxZoom:14});fitted=true;}
+    const box=$("map");
+    if(!fitted&&pts.length>1&&box.offsetWidth>0&&box.offsetHeight>0){map.fitBounds(pts,{padding:[30,30],maxZoom:14});fitted=true;}
   }
   function popup(title,sub,id){
     const d=el("div");d.append(el("b",null,title));if(sub)d.append(el("span",null,sub));
@@ -354,7 +356,7 @@ const FIREBASE_CONFIG = {
     TABS.forEach(t=>{$("tab-"+t).hidden=t!==name;});
     document.querySelectorAll(".tab").forEach(a=>a.setAttribute("aria-selected",String(a.dataset.tab===name)));
     if(location.hash!=="#"+name)history.replaceState(null,"","#"+name);
-    if(name==="carte"&&map)setTimeout(()=>{map.invalidateSize();renderMap();},50);
+    if(name==="carte"&&map){requestAnimationFrame(()=>{map.invalidateSize();renderMap();});setTimeout(()=>map.invalidateSize(),300);}
   }
   document.querySelectorAll(".tab").forEach(a=>a.addEventListener("click",e=>{e.preventDefault();showTab(a.dataset.tab);window.scrollTo({top:0});}));
   window.addEventListener("hashchange",()=>showTab(location.hash.slice(1)));
