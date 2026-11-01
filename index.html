@@ -168,10 +168,6 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .gift .gt{font-weight:600;overflow-wrap:anywhere}
 .offered{font-size:13px;font-weight:600;color:var(--olive)}
 .pinwrap{width:34px;height:40px;display:flex;align-items:flex-start;justify-content:center;cursor:pointer}
-.maplibregl-popup-content{background:var(--surface);color:var(--ink);font-family:var(--body);font-size:14px;border-radius:10px;padding:10px 12px}
-.maplibregl-popup-tip{border-top-color:var(--surface)!important;border-bottom-color:var(--surface)!important}
-.maplibregl-popup-close-button{color:var(--muted);font-size:18px;padding:0 6px}
-.pop b{display:block;font-size:15px}
 #map{overflow:hidden}
 .profilehead{display:flex;align-items:center;gap:14px}
 .profilehead h2{font-size:28px}
@@ -197,10 +193,19 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .by{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
 .by .bubble{width:20px;height:20px;font-size:9px;border:0}
 .by b{color:var(--ink);font-weight:600}
-.pop .addr{display:block;margin-top:6px;font-size:13px;color:var(--aegean);text-decoration:none;overflow-wrap:anywhere}
-.pop .addr:hover{text-decoration:underline}
 .maplinks{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
-.maplink{font-size:12px;font-weight:600;padding:5px 9px;border-radius:8px;border:1px solid var(--line);color:var(--ink);text-decoration:none;background:var(--bg)}
+#map .maplibregl-popup-content{background:#1B2330;color:#EEF1F4;font-family:var(--body);font-size:14px;line-height:1.4;border-radius:12px;padding:12px 14px;box-shadow:0 6px 24px rgba(0,0,0,.45)}
+#map .maplibregl-popup-anchor-bottom .maplibregl-popup-tip{border-top-color:#1B2330}
+#map .maplibregl-popup-anchor-top .maplibregl-popup-tip{border-bottom-color:#1B2330}
+#map .maplibregl-popup-anchor-left .maplibregl-popup-tip{border-right-color:#1B2330}
+#map .maplibregl-popup-anchor-right .maplibregl-popup-tip{border-left-color:#1B2330}
+#map .maplibregl-popup-close-button{color:#AEB7C2;font-size:20px;padding:2px 8px;background:none}
+#map .pop b{display:block;font-size:16px;color:#FFFFFF}
+#map .pop span{color:#C9D1DA}
+#map .pop .addr{display:block;margin-top:8px;font-size:14px;color:#8EC0FF;text-decoration:none;overflow-wrap:anywhere}
+#map .pop .addr:hover{text-decoration:underline}
+#map .maplink{font-size:13px;font-weight:600;padding:7px 10px;border-radius:9px;border:1px solid #3A4656;color:#FFFFFF;text-decoration:none;background:#2A3442}
+#map .pop .linkbtn{color:#8EC0FF}
 </style>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.min.css">
 </head>
