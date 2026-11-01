@@ -287,12 +287,11 @@ window.addEventListener("error",e=>{const n=document.getElementById("notice");if
   function initMap(){
     if(typeof maplibregl==="undefined"){$("map").textContent="La carte n'a pas pu se charger. Recharge la page.";return;}
     const mq=window.matchMedia?window.matchMedia("(prefers-color-scheme: dark)"):null;
-    let dark=!!(mq&&mq.matches),fellBack=false;
+    let dark=true,fellBack=false; // carte toujours en mode sombre
     map=new maplibregl.Map({container:"map",style:OFM+(dark?"dark":"liberty"),center:[23.7348,37.9755],zoom:11.5,
       cooperativeGestures:false,attributionControl:{compact:true}});
     map.addControl(new maplibregl.NavigationControl({showCompass:false}),"top-right");
     map.on("error",e=>{const m=String((e&&e.error&&e.error.message)||"");if(dark&&!fellBack&&/style|404|Failed to fetch/i.test(m)){fellBack=true;map.setStyle(OFM+"positron");}});
-    if(mq&&mq.addEventListener)mq.addEventListener("change",e=>{dark=e.matches;fellBack=false;map.setStyle(OFM+(dark?"dark":"liberty"));});
     map.on("click",e=>{if(!pick)return;setDraft(e.lngLat.lat,e.lngLat.lng);});
     map.on("load",()=>renderMap());
   }
