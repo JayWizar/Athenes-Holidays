@@ -1,0 +1,19 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Programme Athènes : lecture et écriture ouvertes à qui a le lien,
+    // jusqu'à fin janvier 2027, uniquement sur les deux collections de la page.
+    function avantFin() { return request.time < timestamp.date(2027, 1, 31); }
+
+    match /plans/{planId} {
+      allow read: if avantFin();
+      allow create, update: if avantFin()
+        && request.resource.data.title is string
+        && request.resource.data.title.size() <= 120;
+      allow delete: if avantFin();
+    }
+    match /trip/info {
+      allow read, write: if avantFin();
+    }
+  }
+}

@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Athènes en famille</title>
+<meta name="description" content="Le programme partagé du voyage à Athènes, du 22 au 26 décembre.">
+<meta name="theme-color" content="#1F5FA8">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏛️</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gloock&family=Figtree:wght@400;500;600;700&display=swap">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)} body{margin:0} [hidden]{display:none!important}</style>
+<style>
+/* Layout: one column "carnet de voyage" — header with meander band, toolbar, then plans grouped by day */
+:root{
+  --bg:#F4F5F2; --surface:#FFFFFF; --ink:#18212E; --muted:#5D6672; --line:#DCDFDA;
+  --aegean:#1F5FA8; --aegean-soft:#E3ECF7; --olive:#5E6E2E; --olive-soft:#EBEFDD;
+  --ochre:#A86F12; --ochre-soft:#F6ECD9; --danger:#B3261E; --on-accent:#FFFFFF;
+  --display:"Gloock", "Iowan Old Style", Georgia, serif;
+  --body:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11161D; --surface:#19202A; --ink:#E8ECEF; --muted:#9AA4AF; --line:#2A333F;
+  --aegean:#7DB0F0; --aegean-soft:#1C2C42; --olive:#AFC27A; --olive-soft:#26301A;
+  --ochre:#E2B25C; --ochre-soft:#352813; --danger:#F2867E; --on-accent:#0E1620; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11161D; --surface:#19202A; --ink:#E8ECEF; --muted:#9AA4AF; --line:#2A333F;
+  --aegean:#7DB0F0; --aegean-soft:#1C2C42; --olive:#AFC27A; --olive-soft:#26301A;
+  --ochre:#E2B25C; --ochre-soft:#352813; --danger:#F2867E; --on-accent:#0E1620; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5}
+.wrap{max-width:760px;margin:0 auto;padding-block:28px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:22px}
+h1,h2,h3{font-family:var(--display);font-weight:400;text-wrap:balance;margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--aegean);outline-offset:2px}
+
+/* header */
+header{display:flex;flex-direction:column;gap:10px}
+.eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--aegean);font-weight:600}
+h1{font-size:clamp(34px,7vw,52px);line-height:1.05}
+.dates{display:flex;flex-wrap:wrap;align-items:center;gap:8px;color:var(--muted)}
+.meander{height:14px;color:var(--aegean);opacity:.55}
+.meander svg{display:block;width:100%;height:14px}
+.stats{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:14px;color:var(--muted)}
+.stats b{color:var(--ink);font-variant-numeric:tabular-nums}
+
+/* toolbar */
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:13px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn{border:0;border-radius:10px;padding:10px 16px;font-weight:600;cursor:pointer;background:var(--aegean);color:var(--on-accent)}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.small{padding:6px 10px;font-size:13px;border-radius:8px}
+.btn:disabled{opacity:.5;cursor:default}
+
+/* form */
+form.add{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+form.add .full{grid-column:1/-1}
+label{display:flex;flex-direction:column;gap:4px;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);font-weight:600}
+input,select,textarea{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:9px 10px;font-size:15px;text-transform:none;letter-spacing:0;font-weight:400;min-width:0;width:100%}
+textarea{resize:vertical;min-height:60px}
+.formactions{grid-column:1/-1;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+@media (max-width:520px){form.add{grid-template-columns:minmax(0,1fr)}}
+
+/* days */
+.day{display:flex;flex-direction:column;gap:10px}
+#list{display:flex;flex-direction:column;gap:26px}
+.dayhead{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;border-bottom:1px solid var(--line);padding-bottom:6px}
+.dayhead h2{font-size:22px}
+.dayhead span{color:var(--muted);font-size:13px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:grid;grid-template-columns:56px minmax(0,1fr);gap:4px 12px}
+.time{font-variant-numeric:tabular-nums;font-weight:600;color:var(--aegean);font-size:15px;padding-top:2px}
+.time.none{color:var(--muted);font-weight:400;font-size:13px}
+.body{min-width:0;display:flex;flex-direction:column;gap:6px}
+.row{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}
+.title{font-weight:600;font-size:16px;overflow-wrap:anywhere}
+.tag{font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--aegean-soft);color:var(--aegean)}
+.status{font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;border:0;cursor:pointer}
+.st-idee{background:var(--bg);color:var(--muted);border:1px dashed var(--line)}
+.st-encours{background:var(--ochre-soft);color:var(--ochre)}
+.st-reserve{background:var(--olive-soft);color:var(--olive)}
+.meta{color:var(--muted);font-size:14px;overflow-wrap:anywhere}
+.note{font-size:14px;white-space:pre-wrap;overflow-wrap:anywhere}
+.link{color:var(--aegean);font-weight:600;font-size:14px;text-decoration:none}
+.link:hover{text-decoration:underline}
+.foot{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin-top:4px}
+.avatars{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.avatars .stack{display:flex}
+.avatars img{width:24px;height:24px;border-radius:50%;border:2px solid var(--surface);margin-left:-6px}
+.avatars img:first-child{margin-left:0}
+.actions{display:flex;gap:6px;flex-wrap:wrap}
+.likes .thumb{font-size:16px}
+.like[aria-pressed="true"]{background:var(--aegean-soft);color:var(--aegean);border-color:transparent}
+.join[aria-pressed="true"]{background:var(--olive-soft);color:var(--olive);border-color:transparent}
+.btn.del{color:var(--danger)}
+.empty,.notice{background:var(--surface);border:1px dashed var(--line);border-radius:12px;padding:20px;color:var(--muted);text-align:left}
+.empty h3{color:var(--ink);font-size:20px;margin-bottom:6px}
+.notice.warn{border-style:solid;border-color:var(--ochre);color:var(--ink);background:var(--ochre-soft)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;z-index:20}
+.tripedit{display:flex;flex-wrap:wrap;gap:8px;align-items:end}
+.tripedit label{flex:1 1 140px}
+@media (prefers-reduced-motion:no-preference){.card{transition:border-color .15s}.card:hover{border-color:var(--aegean)}}
+
+.whoami{font-size:14px;color:var(--muted)}
+.whoami b{color:var(--ink)}
+.linkbtn{background:none;border:0;padding:0;color:var(--aegean);font-weight:600;cursor:pointer;text-decoration:underline}
+.bubble{width:24px;height:24px;border-radius:50%;display:inline-grid;place-items:center;font-size:10px;font-weight:700;color:#fff;background:hsl(var(--h) 45% 42%);border:2px solid var(--surface);margin-left:-6px}
+.bubble:first-child{margin-left:0}
+.modal{position:fixed;inset:0;background:rgba(10,14,20,.55);display:grid;place-items:center;z-index:30;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.sheet{background:var(--surface);border-radius:16px;padding:22px;width:min(420px,100%);display:flex;flex-direction:column;gap:12px}
+.sheet h2{font-size:26px}
+.sheet p{margin:0;color:var(--muted)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.mapbox{display:flex;flex-direction:column;gap:8px}
+#map{height:300px;border-radius:14px;border:1px solid var(--line);background:var(--surface);z-index:0}
+.legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--muted)}
+.pickbar{background:var(--aegean-soft);border:1px solid var(--aegean);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.picktitle{font-weight:600}
+.picksearch{display:flex;gap:6px}
+.picksearch input{flex:1}
+.pickactions{display:flex;gap:6px;flex-wrap:wrap}
+.pin{display:grid;place-items:center;width:34px;height:34px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--surface);border:2px solid var(--aegean);box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.pin span{transform:rotate(45deg);font-size:16px;line-height:1}
+.pin.home{border-color:var(--olive)}
+.pin.draft{border-color:var(--ochre);border-style:dashed}
+.leaflet-popup-content{font-family:var(--body);font-size:14px}
+.leaflet-popup-content b{display:block;font-size:15px}
+.leaflet-container a.leaflet-popup-close-button{color:var(--muted)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(.9)}}
+.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:var(--surface);color:var(--ink)}
+.btn.big{padding:12px 18px;font-size:16px}
+.wizard{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:14px}
+.wizhead{display:flex;justify-content:space-between;align-items:center}
+.dots{display:flex;gap:6px}
+.dots span{width:28px;height:6px;border-radius:3px;background:var(--line)}
+.dots span.on{background:var(--aegean)}
+.wizq{font-family:var(--display);font-size:24px;line-height:1.2;margin:0}
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.tile{border:2px solid var(--line);background:var(--bg);border-radius:14px;padding:16px 10px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;font-weight:600;font-size:15px;text-align:center}
+.tile .em{font-size:30px;line-height:1}
+.tile[aria-pressed="true"]{border-color:var(--aegean);background:var(--aegean-soft);color:var(--aegean)}
+@media (prefers-reduced-motion:no-preference){.tile{transition:transform .12s}.tile:active{transform:scale(.96)}}
+.pills{display:flex;flex-wrap:wrap;gap:8px}
+.pill{border:2px solid var(--line);background:var(--bg);border-radius:999px;padding:9px 14px;cursor:pointer;font-weight:600;font-size:14px}
+.pill[aria-pressed="true"]{border-color:var(--aegean);background:var(--aegean-soft);color:var(--aegean)}
+.wizsub{font-size:13px;color:var(--muted);font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.wiznav{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.wizfields{display:flex;flex-direction:column;gap:10px}
+.dislike[aria-pressed="true"]{background:var(--ochre-soft);color:var(--ochre);border-color:transparent}
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Voyage en famille</div>
+    <h1 id="tripTitle">Athènes, décembre 2026</h1>
+    <div class="dates"><span id="tripDates">Dates à fixer</span><button class="btn ghost small" id="editTripBtn">Modifier les dates</button></div>
+    <div class="tripedit" id="tripEdit" hidden>
+      <label for="tStart">Arrivée<input type="date" id="tStart"></label>
+      <label for="tEnd">Départ<input type="date" id="tEnd"></label>
+      <label for="tStay">Logement<input type="text" id="tStay" placeholder="Quartier ou adresse"></label>
+      <button class="btn small" id="saveTrip">Enregistrer</button>
+      <button type="button" class="btn ghost small" id="pinStay">📍 Placer le logement sur la carte</button>
+    </div>
+    <div class="meta" id="tripStay"></div>
+    <div class="meander" aria-hidden="true"><svg preserveAspectRatio="none"><defs><pattern id="mq" width="28" height="14" patternUnits="userSpaceOnUse"><path d="M0 13 H24 V1 H6 V9 H16 V5 H11" fill="none" stroke="currentColor" stroke-width="1.6"/></pattern></defs><rect width="100%" height="14" fill="url(#mq)"/></svg></div>
+    <div class="whoami">Tu es <b id="meName">…</b> · <button type="button" class="linkbtn" id="changeName">changer</button></div>
+    <div class="stats" id="stats"><span><b>0</b> propositions</span></div>
+  </header>
+
+  <div id="notice" class="notice" hidden></div>
+
+  <section class="mapbox" aria-label="Carte des lieux">
+    <div class="pickbar" id="pickBar" hidden>
+      <div class="picktitle" id="pickTitle">Touche la carte pour placer le lieu</div>
+      <form class="picksearch" id="pickSearch">
+        <label for="pickQuery" class="sr">Chercher une adresse</label>
+        <input id="pickQuery" placeholder="Chercher une adresse ou un lieu">
+        <button class="btn small" type="submit">Chercher</button>
+      </form>
+      <div class="pickactions">
+        <button type="button" class="btn small" id="pickSave" disabled>Valider cet endroit</button>
+        <button type="button" class="btn ghost small" id="pickCancel">Annuler</button>
+      </div>
+    </div>
+    <div id="map"></div>
+    <div class="legend"><span>🏠 Logement</span><span>🍽️ Resto</span><span>⭐ Activité</span><span>🏛️ Visite</span><span>🍸 Autre</span></div>
+  </section>
+
+  <div class="toolbar">
+    <div class="chips" role="group" aria-label="Filtrer">
+      <button class="chip" data-f="all" aria-pressed="true">Tout</button>
+      <button class="chip" data-f="resto" aria-pressed="false">Restos</button>
+      <button class="chip" data-f="activite" aria-pressed="false">Activités</button>
+      <button class="chip" data-f="visite" aria-pressed="false">Visites</button>
+      <button class="chip" data-f="mine" aria-pressed="false">Où je vais</button>
+    </div>
+    <button class="btn big" id="openForm">✨ J'ai une idée cool</button>
+  </div>
+
+  <section class="wizard" id="wizard" hidden aria-live="polite">
+    <div class="wizhead">
+      <div class="dots" id="wizDots"><span></span><span></span><span></span><span></span></div>
+      <button type="button" class="linkbtn" id="wizClose">Fermer</button>
+    </div>
+    <div id="wizBody"></div>
+  </section>
+
+  <main id="list">
+    <div class="empty"><h3>Chargement du programme…</h3>Les propositions de la famille vont apparaître ici.</div>
+  </main>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<div class="modal" id="nameModal" hidden>
+  <form class="sheet" id="nameForm">
+    <h2>Bienvenue !</h2>
+    <p>Écris ton prénom pour que la famille sache qui propose et qui valide.</p>
+    <label for="nameInput">Ton prénom<input id="nameInput" maxlength="30" autocomplete="given-name" required></label>
+    <button class="btn" type="submit">C'est parti</button>
+  </form>
+</div>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
