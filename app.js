@@ -172,7 +172,7 @@ const FIREBASE_CONFIG = {
   // ---------- formulaire & filtres ----------
   document.querySelectorAll(".chip").forEach(b=>b.onclick=()=>{filter=b.dataset.f;document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));render();});
   // ---------- questionnaire « J'ai une idée cool » ----------
-  const KINDS=[["resto","🍽️","Un resto"],["activite","⭐","Une activité"],["visite","🏛️","Une visite"],["autre","🍸","Un verre, un café…"]];
+  const KINDS=[["resto","🍽️","Un resto"],["activite","⭐","Une activité"],["visite","🏛️","Une visite"],["autre","🍸","Un verre, un café…"],["custom","✏️","Autre chose"]];
   const GENRES={
     resto:["Taverne grecque","Poisson & fruits de mer","Souvlaki / street food","Brunch / café","Resto qui sort de l'ordinaire"],
     activite:["Plage / baignade","Balade / rando","Marché / shopping","Sortie le soir","Concert / spectacle","Sport"],
@@ -204,13 +204,31 @@ const FIREBASE_CONFIG = {
     if(w.step===0){
       body.append(el("p","wizq","C'est quoi ton idée ?"));
       const t=el("div","tiles");
-      KINDS.forEach(([v,em,label])=>{const b=el("button","tile");b.type="button";b.setAttribute("aria-pressed",String(w.type===v));
-        b.append(el("span","em",em),el("span",null,label));b.onclick=()=>{if(w.type!==v)w.genre="";w.type=v;w.step=1;renderWizard();};t.append(b);});
+      KINDS.forEach(([v,em,label])=>{const b=el("button","tile"+(v==="custom"?" wide":""));b.type="button";b.setAttribute("aria-pressed",String(w.kind===v));
+        b.append(el("span","em",em),el("span",null,label));
+        b.onclick=()=>{if(w.kind!==v){w.genre="";w.otherOpen=false;}w.kind=v;w.type=v==="custom"?"autre":v;w.step=1;renderWizard();};t.append(b);});
       body.append(t);
     }else if(w.step===1){
-      body.append(el("p","wizq",Q2[w.type]));
-      body.append(pills(GENRES[w.type].map(g=>[g,g]),w.genre,v=>{w.genre=w.genre===v?"":v;w.step=2;renderWizard();}));
-      body.append(nav(()=>{w.step=0;renderWizard();},w.genre?"Suivant →":"Passer →",()=>{w.step=2;renderWizard();}));
+      const custom=w.kind==="custom",list=custom?[]:GENRES[w.type];
+      body.append(el("p","wizq",custom?"C'est quoi comme idée ?":Q2[w.type]));
+      const isOther=custom||w.otherOpen||(w.genre&&!list.includes(w.genre));
+      if(!custom){
+        const opts=list.map(g=>[g,g]).concat([["__other","✏️ Autre…"]]);
+        body.append(pills(opts,isOther?"__other":w.genre,v=>{
+          if(v==="__other"){w.otherOpen=true;if(list.includes(w.genre))w.genre="";renderWizard();setTimeout(()=>{const i=$("w-genre");if(i)i.focus();},30);return;}
+          w.otherOpen=false;w.genre=w.genre===v?"":v;w.step=2;renderWizard();}));
+      }
+      let nx;
+      if(isOther){
+        const l=el("label");l.htmlFor="w-genre";l.append(custom?"Décris-la en quelques mots":"Précise");
+        const i=document.createElement("input");i.id="w-genre";i.maxLength=40;i.placeholder=custom?"Ex. Cours de cuisine, hammam, karaoké…":"Écris ton idée";
+        i.value=list.includes(w.genre)?"":(w.genre||"");
+        i.oninput=()=>{w.genre=i.value.trim();if(nx)nx.textContent=w.genre?"Suivant →":"Passer →";};
+        i.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();w.step=2;renderWizard();}};
+        l.append(i);body.append(l);
+        if(custom)setTimeout(()=>i.focus(),30);
+      }
+      const n=nav(()=>{w.step=0;renderWizard();},w.genre?"Suivant →":"Passer →",()=>{w.step=2;renderWizard();});nx=n.lastChild;body.append(n);
     }else if(w.step===2){
       body.append(el("p","wizq","Plutôt quand ?"));
       body.append(el("div","wizsub","Moment de la journée"));
@@ -249,7 +267,7 @@ const FIREBASE_CONFIG = {
       n.append(again,pin);body.append(n);
     }
   }
-  function openWizard(){w={step:0,type:"",genre:"",moment:"",date:"",title:"",place:"",link:""};$("wizard").hidden=false;renderWizard();$("wizard").scrollIntoView({behavior:"smooth",block:"start"});}
+  function openWizard(){w={step:0,kind:"",otherOpen:false,type:"",genre:"",moment:"",date:"",title:"",place:"",link:""};$("wizard").hidden=false;renderWizard();$("wizard").scrollIntoView({behavior:"smooth",block:"start"});}
   function closeWizard(){w=null;$("wizard").hidden=true;}
   $("openForm").onclick=openWizard;
   $("wizClose").onclick=closeWizard;

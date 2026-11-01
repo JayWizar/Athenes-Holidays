@@ -140,6 +140,8 @@ textarea{resize:vertical;min-height:60px}
 .tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .tile{border:2px solid var(--line);background:var(--bg);border-radius:14px;padding:16px 10px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;font-weight:600;font-size:15px;text-align:center}
 .tile .em{font-size:30px;line-height:1}
+.tile.wide{grid-column:1/-1;flex-direction:row;justify-content:center;padding:12px}
+.tile.wide .em{font-size:22px}
 .tile[aria-pressed="true"]{border-color:var(--aegean);background:var(--aegean-soft);color:var(--aegean)}
 @media (prefers-reduced-motion:no-preference){.tile{transition:transform .12s}.tile:active{transform:scale(.96)}}
 .pills{display:flex;flex-wrap:wrap;gap:8px}
