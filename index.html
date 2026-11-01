@@ -125,11 +125,6 @@ textarea{resize:vertical;min-height:60px}
 .pin span{transform:rotate(45deg);font-size:16px;line-height:1}
 .pin.home{border-color:var(--olive)}
 .pin.draft{border-color:var(--ochre);border-style:dashed}
-.leaflet-popup-content{font-family:var(--body);font-size:14px}
-.leaflet-popup-content b{display:block;font-size:15px}
-.leaflet-container a.leaflet-popup-close-button{color:var(--muted)}
-.leaflet-container{background:var(--bg)}
-.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:var(--surface);color:var(--ink)}
 .btn.big{padding:12px 18px;font-size:16px}
 .wizard{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:14px}
 .wizhead{display:flex;justify-content:space-between;align-items:center}
@@ -151,9 +146,10 @@ textarea{resize:vertical;min-height:60px}
 .wiznav{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .wizfields{display:flex;flex-direction:column;gap:10px}
 .dislike[aria-pressed="true"]{background:var(--ochre-soft);color:var(--ochre);border-color:transparent}
-.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;background:var(--bg);padding-block:6px;border-bottom:1px solid var(--line)}
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;background:var(--bg);padding-block:6px;border-bottom:1px solid var(--line)}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
-.tab{text-align:center;padding:10px 6px;border-radius:10px;font-weight:600;font-size:14px;color:var(--muted);text-decoration:none}
+.tab{display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center;padding:8px 4px;border-radius:10px;font-weight:600;font-size:12px;color:var(--muted);text-decoration:none}
+.tab .te{font-size:18px;line-height:1.1}
 .tab[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 0 0 1px var(--line)}
 .tabpanel{display:flex;flex-direction:column;gap:18px}
 .tabpanel[hidden]{display:none!important}
@@ -170,8 +166,28 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .gift.taken{opacity:.75}
 .gift .gt{font-weight:600;overflow-wrap:anywhere}
 .offered{font-size:13px;font-weight:600;color:var(--olive)}
+.pinwrap{width:34px;height:40px;display:flex;align-items:flex-start;justify-content:center;cursor:pointer}
+.maplibregl-popup-content{background:var(--surface);color:var(--ink);font-family:var(--body);font-size:14px;border-radius:10px;padding:10px 12px}
+.maplibregl-popup-tip{border-top-color:var(--surface)!important;border-bottom-color:var(--surface)!important}
+.maplibregl-popup-close-button{color:var(--muted);font-size:18px;padding:0 6px}
+.pop b{display:block;font-size:15px}
+#map{overflow:hidden}
+.profilehead{display:flex;align-items:center;gap:14px}
+.profilehead h2{font-size:28px}
+.bubble.big{width:56px;height:56px;font-size:20px;margin-left:0;border:0}
+.pstats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.pstat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center}
+.pstat b{display:block;font-family:var(--display);font-weight:400;font-size:28px;font-variant-numeric:tabular-nums}
+.pstat span{font-size:12px;color:var(--muted)}
+.psec{display:flex;flex-direction:column;gap:8px}
+.psec h3{font-size:20px}
+.psec p{margin:0}
+.mini{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.mini .mt{font-weight:600;min-width:0;overflow-wrap:anywhere}
+.mini .ms{font-size:13px;color:var(--muted);white-space:nowrap}
+.card.flash{border-color:var(--aegean);box-shadow:0 0 0 3px var(--aegean-soft)}
 </style>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.min.css">
 </head>
 <body>
 <div class="wrap">
@@ -195,9 +211,10 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   <div id="notice" class="notice" hidden></div>
 
   <nav class="tabs" role="tablist" aria-label="Sections">
-    <a class="tab" href="#programme" data-tab="programme">📅 Programme</a>
-    <a class="tab" href="#carte" data-tab="carte">🗺️ Carte</a>
-    <a class="tab" href="#cadeaux" data-tab="cadeaux">🎁 Cadeaux</a>
+    <a class="tab" href="#programme" data-tab="programme"><span class="te">📅</span><span>Programme</span></a>
+    <a class="tab" href="#carte" data-tab="carte"><span class="te">🗺️</span><span>Carte</span></a>
+    <a class="tab" href="#cadeaux" data-tab="cadeaux"><span class="te">🎁</span><span>Cadeaux</span></a>
+    <a class="tab" href="#profil" data-tab="profil"><span class="te">🙂</span><span>Profil</span></a>
   </nav>
 
   <div class="tabpanel" id="tab-programme">
@@ -258,6 +275,19 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     </form>
     <div id="giftList"></div>
   </div>
+  <div class="tabpanel" id="tab-profil" hidden>
+    <div class="profilehead">
+      <span class="bubble big" id="pBubble"></span>
+      <div>
+        <h2 id="pName">…</h2>
+        <button type="button" class="linkbtn" id="pChange">Changer de prénom</button>
+      </div>
+    </div>
+    <div class="pstats" id="pStats"></div>
+    <section class="psec"><h3>Mes idées</h3><div id="pIdeas"></div></section>
+    <section class="psec"><h3>Ce que je kiffe</h3><div id="pLikes"></div></section>
+    <section class="psec"><h3>Les cadeaux que j'offre</h3><p class="meta">Visible seulement par toi.</p><div id="pGifts"></div></section>
+  </div>
 </div>
 <div class="toast" id="toast" hidden></div>
 
@@ -271,7 +301,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 </div>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="app.js?v=7"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.min.js"></script>
+<script src="app.js?v=8"></script>
 </body>
 </html>

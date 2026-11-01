@@ -82,7 +82,7 @@ window.addEventListener("error",e=>{const n=document.getElementById("notice");if
       groups[k].sort((a,b)=>k==="~"?(score(b)-score(a))||(a.title||"").localeCompare(b.title||""):(a.time||"99").localeCompare(b.time||"99")).forEach(p=>sec.append(card(p)));
       list.append(sec);
     });
-    renderMap();
+    renderMap();renderProfile();if(focusId)setTimeout(focusCard,50);
   }
 
   function field(lbl,key,type,full,opts){
@@ -138,6 +138,7 @@ window.addEventListener("error",e=>{const n=document.getElementById("notice");if
       db_.onclick=()=>vote(p.id,down?null:"down");
       act.append(lb,db_);
     }
+    const sh=el("button","btn ghost small","💬 Partager");sh.onclick=()=>shareIdea(p);act.append(sh);
     const mb=el("button","btn ghost small",hasPos(p)?"📍 Voir sur la carte":"📍 Placer sur la carte");
     mb.onclick=()=>hasPos(p)?showOnMap(p):startPick({kind:"plan",id:p.id},p.title||"ce lieu",p.place||p.title||"");
     act.append(mb);
@@ -275,58 +276,67 @@ window.addEventListener("error",e=>{const n=document.getElementById("notice");if
   $("editTripBtn").onclick=()=>{$("tStart").value=trip.start||"";$("tEnd").value=trip.end||"";$("tStay").value=trip.stay||"";$("tripEdit").hidden=!$("tripEdit").hidden;};
   $("saveTrip").onclick=async()=>{try{await fs.collection("trip").doc("info").set({start:$("tStart").value,end:$("tEnd").value,stay:$("tStay").value.trim()},{merge:true});$("tripEdit").hidden=true;toast("Enregistré");}catch(e){toast("Enregistrement impossible");}};
 
-  // ---------- carte ----------
-  let map=null,layer=null,fitted=false,pick=null,draftMarker=null,markers={};
-  const hasPos=o=>typeof o.lat==="number"&&typeof o.lng==="number";
-  const pinIcon=(emoji,cls)=>L.divIcon({className:"",html:`<div class="pin ${cls||""}"><span>${emoji}</span></div>`,iconSize:[34,34],iconAnchor:[17,34],popupAnchor:[0,-32]});
+  // ---------- carte (MapLibre + OpenFreeMap, sans clé) ----------
+  let map=null,fitted=false,pick=null,draftMarker=null,markers={},allMarkers=[];
+  const hasPos=o=>o&&typeof o.lat==="number"&&typeof o.lng==="number";
+  const OFM="https://tiles.openfreemap.org/styles/";
+  function pinEl(emoji,cls){const w=el("div","pinwrap");const p=el("div","pin "+(cls||""));p.append(el("span",null,emoji));w.append(p);return w;}
   function initMap(){
-    if(typeof L==="undefined"){$("map").textContent="La carte n'a pas pu se charger.";return;}
-    map=L.map("map",{scrollWheelZoom:false,tap:true}).setView([37.9755,23.7348],12);
-    const attr='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/attributions">CARTO</a>';
+    if(typeof maplibregl==="undefined"){$("map").textContent="La carte n'a pas pu se charger. Recharge la page.";return;}
     const mq=window.matchMedia?window.matchMedia("(prefers-color-scheme: dark)"):null;
-    const tiles=dark=>L.tileLayer("https://{s}.basemaps.cartocdn.com/"+(dark?"dark_all":"rastertiles/voyager")+"/{z}/{x}/{y}{r}.png",{maxZoom:20,subdomains:"abcd",attribution:attr});
-    let base=tiles(mq&&mq.matches).addTo(map);
-    if(mq&&mq.addEventListener)mq.addEventListener("change",e=>{map.removeLayer(base);base=tiles(e.matches).addTo(map);});
-    layer=L.layerGroup().addTo(map);
-    map.on("click",e=>{if(!pick)return;setDraft(e.latlng.lat,e.latlng.lng);});
+    let dark=!!(mq&&mq.matches),fellBack=false;
+    map=new maplibregl.Map({container:"map",style:OFM+(dark?"dark":"liberty"),center:[23.7348,37.9755],zoom:11.5,
+      cooperativeGestures:false,attributionControl:{compact:true}});
+    map.addControl(new maplibregl.NavigationControl({showCompass:false}),"top-right");
+    map.on("error",e=>{const m=String((e&&e.error&&e.error.message)||"");if(dark&&!fellBack&&/style|404|Failed to fetch/i.test(m)){fellBack=true;map.setStyle(OFM+"positron");}});
+    if(mq&&mq.addEventListener)mq.addEventListener("change",e=>{dark=e.matches;fellBack=false;map.setStyle(OFM+(dark?"dark":"liberty"));});
+    map.on("click",e=>{if(!pick)return;setDraft(e.lngLat.lat,e.lngLat.lng);});
+    map.on("load",()=>renderMap());
+  }
+  function addPin(lat,lng,emoji,cls,popNode){
+    const m=new maplibregl.Marker({element:pinEl(emoji,cls),anchor:"bottom"}).setLngLat([lng,lat]);
+    if(popNode)m.setPopup(new maplibregl.Popup({offset:30,closeButton:true,maxWidth:"240px"}).setDOMContent(popNode));
+    m.addTo(map);return m;
   }
   function renderMap(){
-    if(!map)return;layer.clearLayers();markers={};const pts=[];
+    if(!map)return;allMarkers.forEach(m=>m.remove());allMarkers=[];markers={};const pts=[];
     if(hasPos({lat:trip.stayLat,lng:trip.stayLng})){
-      L.marker([trip.stayLat,trip.stayLng],{icon:pinIcon("🏠","home")}).bindPopup(popup("Logement",trip.stay||"")).addTo(layer);pts.push([trip.stayLat,trip.stayLng]);
+      allMarkers.push(addPin(trip.stayLat,trip.stayLng,"🏠","home",popup("Logement",trip.stay||"")));pts.push([trip.stayLng,trip.stayLat]);
     }
     plans.filter(hasPos).forEach(p=>{
       const when=[p.date?fmtShort(p.date):"",p.time].filter(Boolean).join(" · ");
-      const m=L.marker([p.lat,p.lng],{icon:pinIcon(ICON[p.type]||"📍")}).bindPopup(popup(p.title||"",when||p.place||"",p.id)).addTo(layer);
-      markers[p.id]=m;pts.push([p.lat,p.lng]);
+      const m=addPin(p.lat,p.lng,ICON[p.type]||"📍","",popup(p.title||"",when||p.place||"",p.id));
+      markers[p.id]=m;allMarkers.push(m);pts.push([p.lng,p.lat]);
     });
     const box=$("map");
-    if(!fitted&&pts.length>1&&box.offsetWidth>0&&box.offsetHeight>0){map.fitBounds(pts,{padding:[30,30],maxZoom:14});fitted=true;}
+    if(!fitted&&pts.length>1&&box.offsetWidth>0&&box.offsetHeight>0){
+      const bb=pts.reduce((b,c)=>b.extend(c),new maplibregl.LngLatBounds(pts[0],pts[0]));
+      map.fitBounds(bb,{padding:50,maxZoom:14,duration:0});fitted=true;
+    }
   }
   function popup(title,sub,id){
-    const d=el("div");d.append(el("b",null,title));if(sub)d.append(el("span",null,sub));
+    const d=el("div","pop");d.append(el("b",null,title));if(sub)d.append(el("span",null,sub));
     if(id){const a=el("button","linkbtn","Voir la proposition");a.style.display="block";a.style.marginTop="6px";
-      a.onclick=()=>{const c=document.getElementById("card-"+id);if(c)c.scrollIntoView({behavior:"smooth",block:"center"});};d.append(a);}
+      a.onclick=()=>{showTab("programme");setTimeout(()=>{const c=document.getElementById("card-"+id);if(c)c.scrollIntoView({behavior:"smooth",block:"center"});},60);};d.append(a);}
     return d;
   }
   function showOnMap(p){
     if(!map||!markers[p.id])return;showTab("carte");
-    $("map").scrollIntoView({behavior:"smooth",block:"center"});
-    map.setView([p.lat,p.lng],15);markers[p.id].openPopup();
+    setTimeout(()=>{map.resize();map.jumpTo({center:[p.lng,p.lat],zoom:15});const m=markers[p.id];if(m&&!m.getPopup().isOpen())m.togglePopup();},80);
   }
   function setDraft(lat,lng){
-    if(draftMarker)draftMarker.setLatLng([lat,lng]);else draftMarker=L.marker([lat,lng],{icon:pinIcon("📍","draft")}).addTo(map);
+    if(draftMarker)draftMarker.setLngLat([lng,lat]);else draftMarker=new maplibregl.Marker({element:pinEl("📍","draft"),anchor:"bottom"}).setLngLat([lng,lat]).addTo(map);
     pick.lat=lat;pick.lng=lng;$("pickSave").disabled=false;
   }
   function startPick(target,label,query){
     if(!map){toast("La carte n'est pas disponible.");return;}showTab("carte");
     pick=Object.assign({},target);$("pickTitle").textContent=`Touche la carte pour placer « ${label} », ou cherche l'adresse.`;
     $("pickQuery").value=query||"";$("pickSave").disabled=true;$("pickBar").hidden=false;
-    $("pickBar").scrollIntoView({behavior:"smooth",block:"start"});
+    window.scrollTo({top:0});
     const cur=target.kind==="trip"?{lat:trip.stayLat,lng:trip.stayLng}:plans.find(x=>x.id===target.id)||{};
-    if(hasPos(cur)){setDraft(cur.lat,cur.lng);map.setView([cur.lat,cur.lng],15);}
+    if(hasPos(cur))setTimeout(()=>{map.resize();setDraft(cur.lat,cur.lng);map.jumpTo({center:[cur.lng,cur.lat],zoom:15});},80);
   }
-  function endPick(){pick=null;$("pickBar").hidden=true;if(draftMarker){map.removeLayer(draftMarker);draftMarker=null;}}
+  function endPick(){pick=null;$("pickBar").hidden=true;if(draftMarker){draftMarker.remove();draftMarker=null;}}
   $("pickCancel").onclick=endPick;
   $("pickSearch").addEventListener("submit",async e=>{
     e.preventDefault();const q=$("pickQuery").value.trim();if(!q)return;
@@ -334,7 +344,7 @@ window.addEventListener("error",e=>{const n=document.getElementById("notice");if
       const r=await fetch("https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&accept-language=fr&viewbox=23.45,38.20,24.10,37.70&q="+encodeURIComponent(q+", Attique, Grèce"));
       const j=await r.json();
       if(!j.length){toast("Adresse introuvable : essaie un autre nom, ou touche la carte.");return;}
-      const lat=+j[0].lat,lng=+j[0].lon;setDraft(lat,lng);map.setView([lat,lng],16);
+      const lat=+j[0].lat,lng=+j[0].lon;setDraft(lat,lng);map.jumpTo({center:[lng,lat],zoom:16});
     }catch(err){toast("Recherche impossible : touche directement la carte.");}
   });
   $("pickSave").onclick=async()=>{
@@ -350,16 +360,55 @@ window.addEventListener("error",e=>{const n=document.getElementById("notice");if
   $("pinStay").onclick=()=>startPick({kind:"trip"},"le logement",trip.stay||"Lycabette");
 
   // ---------- onglets ----------
-  const TABS=["programme","carte","cadeaux"];
+  const TABS=["programme","carte","cadeaux","profil"];
+  let focusId=null;
   function showTab(name){
-    if(!TABS.includes(name))name="programme";
+    if(name&&name.startsWith("idee-")){focusId=name.slice(5);name="programme";setTimeout(focusCard,100);}
+    else if(!TABS.includes(name))name="programme";
     TABS.forEach(t=>{$("tab-"+t).hidden=t!==name;});
     document.querySelectorAll(".tab").forEach(a=>a.setAttribute("aria-selected",String(a.dataset.tab===name)));
-    if(location.hash!=="#"+name)history.replaceState(null,"","#"+name);
-    if(name==="carte"&&map){requestAnimationFrame(()=>{map.invalidateSize();renderMap();});setTimeout(()=>map.invalidateSize(),300);}
+    if(!focusId&&location.hash!=="#"+name)history.replaceState(null,"","#"+name);
+    if(name==="profil")renderProfile();
+    if(name==="carte"&&map){requestAnimationFrame(()=>{map.resize();renderMap();});setTimeout(()=>map.resize(),300);}
   }
   document.querySelectorAll(".tab").forEach(a=>a.addEventListener("click",e=>{e.preventDefault();showTab(a.dataset.tab);window.scrollTo({top:0});}));
   window.addEventListener("hashchange",()=>showTab(location.hash.slice(1)));
+
+  function focusCard(){
+    if(!focusId)return;const c=document.getElementById("card-"+focusId);
+    if(!c){if(loaded){toast("Cette idée n'existe plus.");focusId=null;}return;}
+    c.scrollIntoView({behavior:"smooth",block:"center"});c.classList.add("flash");setTimeout(()=>c.classList.remove("flash"),2500);focusId=null;
+  }
+  const SITE=location.origin+location.pathname;
+  async function shareIdea(p){
+    const emoji=ICON[p.type]||"✨";
+    const when=[p.date?fmtDay(p.date):"",p.time||MOMENTS[p.moment]||""].filter(Boolean).join(", ");
+    const url=SITE+"#idee-"+p.id;
+    const txt=`${emoji} Idée pour Athènes : ${p.title}${p.place?" ("+p.place+")":""}${when?"\n🗓️ "+when:""}\n\nTu kiffes ou pas chaud ? Vote ici 👇\n${url}`;
+    try{if(navigator.share){await navigator.share({text:txt});return;}}catch(e){if(e&&e.name==="AbortError")return;}
+    window.open("https://wa.me/?text="+encodeURIComponent(txt),"_blank","noopener");
+  }
+
+  // ---------- profil ----------
+  function mini(title,sub,onClick){
+    const r=el("div","mini");r.append(el("span","mt",title));if(sub)r.append(el("span","ms",sub));
+    if(onClick){r.style.cursor="pointer";r.onclick=onClick;}return r;
+  }
+  function renderProfile(){
+    if(!$("tab-profil")||$("tab-profil").hidden)return;
+    const n=me||"…";$("pName").textContent=n;const bb=$("pBubble");bb.textContent=initials(n);bb.style.setProperty("--h",hue(n));
+    const mineIdeas=plans.filter(p=>(p.who||p.createdBy)===me);
+    const myLikes=plans.filter(p=>liked(p).includes(me));
+    const myOffers=(typeof gifts!=="undefined"?gifts:[]).filter(g=>g.takenBy===me&&g.owner!==me);
+    const st=$("pStats");st.replaceChildren();
+    [[mineIdeas.length,"idées proposées"],[myLikes.length,"idées kiffées"],[myOffers.length,"cadeaux offerts"]].forEach(([v,l])=>{const d=el("div","pstat");d.append(el("b",null,String(v)),el("span",null,l));st.append(d);});
+    const goIdea=id=>()=>{location.hash="idee-"+id;};
+    const fill=(box,items,empty,fn)=>{box.replaceChildren();if(!items.length){box.append(el("p","meta",empty));return;}items.forEach(x=>box.append(fn(x)));};
+    fill($("pIdeas"),mineIdeas,"Tu n'as pas encore proposé d'idée. Va dans Programme, puis ✨ J'ai une idée cool.",p=>mini(p.title,`👍 ${liked(p).length} · 👎 ${disliked(p).length}`,goIdea(p.id)));
+    fill($("pLikes"),myLikes,"Tu n'as encore kiffé aucune idée.",p=>mini(p.title,p.date?fmtShort(p.date):"À caler",goIdea(p.id)));
+    fill($("pGifts"),myOffers,"Tu n'offres encore aucun cadeau de la liste.",g=>mini(g.title,"pour "+g.owner,()=>showTab("cadeaux")));
+  }
+  $("pChange").onclick=()=>askName(true);
 
   // ---------- cadeaux ----------
   let gifts=[],giftsLoaded=false,giftsError=false,giftDel=null;
@@ -417,7 +466,7 @@ window.addEventListener("error",e=>{const n=document.getElementById("notice");if
     const ref=fs.collection("trip").doc("info");const s=await ref.get();
     if(s.exists)return;
     const batch=fs.batch();batch.set(ref,SEED_TRIP);
-    SEED_PLANS.forEach(p=>{const {id,...d}=p;batch.set(fs.collection("plans").doc(id),Object.assign(d,{createdBy:"Julio",createdAt:new Date().toISOString(),likes:{},dislikes:{},joiners:{}}));});
+    SEED_PLANS.forEach(p=>{const {id,...d}=p;batch.set(fs.collection("plans").doc(id),Object.assign(d,{createdBy:d.who||"Julio",createdAt:new Date().toISOString(),likes:{},dislikes:{},joiners:{}}));});
     await batch.commit();
   }
   askName(false);
@@ -428,7 +477,7 @@ window.addEventListener("error",e=>{const n=document.getElementById("notice");if
     fs.collection("plans").onSnapshot(snap=>{clearTimeout(timer);notice("");plans=snap.docs.map(d=>Object.assign({id:d.id},d.data()));loaded=true;render();},
       err=>{clearTimeout(timer);loaded=true;notice("Impossible de charger le programme. Vérifie les règles Firestore.",true);console.error(err);render();});
     fs.collection("trip").doc("info").onSnapshot(s=>{trip=s.exists?s.data():{};renderTrip();renderMap();},()=>{});
-    fs.collection("gifts").onSnapshot(snap=>{gifts=snap.docs.map(d=>Object.assign({id:d.id},d.data()));giftsLoaded=true;renderGifts();},
+    fs.collection("gifts").onSnapshot(snap=>{gifts=snap.docs.map(d=>Object.assign({id:d.id},d.data()));giftsLoaded=true;renderGifts();renderProfile();},
       err=>{console.error(err);giftsLoaded=true;giftsError=true;renderGifts();});
   });
   renderTrip();
