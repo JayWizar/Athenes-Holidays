@@ -206,6 +206,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 #map .pop .addr:hover{text-decoration:underline}
 #map .maplink{font-size:13px;font-weight:600;padding:7px 10px;border-radius:9px;border:1px solid #3A4656;color:#FFFFFF;text-decoration:none;background:#2A3442}
 #map .pop .linkbtn{color:#8EC0FF}
+.backbtn{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:8px 14px;font-weight:600;font-size:14px;cursor:pointer}
 </style>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.min.css">
 </head>
@@ -263,6 +264,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   </div>
 
   <div class="tabpanel" id="tab-carte" hidden>
+    <button type="button" class="backbtn">← Retour</button>
   <section class="mapbox" aria-label="Carte des lieux">
     <div class="pickbar" id="pickBar" hidden>
       <div class="picktitle" id="pickTitle">Touche la carte pour placer le lieu</div>
@@ -284,6 +286,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   </div>
 
   <div class="tabpanel" id="tab-cadeaux" hidden>
+    <button type="button" class="backbtn">← Retour</button>
     <div class="giftintro">
       <h2>Cadeaux de Noël</h2>
       <p class="meta">Chacun note ses envies. Tu vois les listes de tout le monde et tu peux dire « Je l'offre » pour éviter les doublons. Sur ta propre liste, tu ne vois pas qui offre quoi : surprise garantie.</p>
@@ -298,6 +301,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     <div id="giftList"></div>
   </div>
   <div class="tabpanel" id="tab-profil" hidden>
+    <button type="button" class="backbtn">← Retour</button>
     <div class="profilehead">
       <span class="bubble big" id="pBubble"></span>
       <div>
@@ -324,6 +328,6 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.min.js"></script>
-<script src="app.js?v=13"></script>
+<script src="app.js?v=14"></script>
 </body>
 </html>

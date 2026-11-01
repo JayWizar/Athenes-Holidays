@@ -411,11 +411,13 @@ window.addEventListener("error",e=>{const n=document.getElementById("notice");if
   // ---------- onglets ----------
   const TABS=["programme","carte","cadeaux","profil"];
   let focusId=null;
+  const visited=[];
   function showTab(name){
     if(name&&name.startsWith("idee-")){focusId=name.slice(5);name="programme";setTimeout(focusCard,100);}
     else if(!TABS.includes(name))name="programme";
     TABS.forEach(t=>{$("tab-"+t).hidden=t!==name;});
     document.querySelectorAll(".tab").forEach(a=>a.setAttribute("aria-selected",String(a.dataset.tab===name)));
+    if(visited[visited.length-1]!==name)visited.push(name);
     if(!focusId&&location.hash!=="#"+name&&!(name==="programme"&&!location.hash))history.replaceState(null,"","#"+name);
     if(name==="profil")renderProfile();
     if(name==="carte"&&map){requestAnimationFrame(()=>{map.resize();renderMap();});setTimeout(()=>map.resize(),300);}
@@ -425,6 +427,10 @@ window.addEventListener("error",e=>{const n=document.getElementById("notice");if
     if(location.hash==="#"+t){window.scrollTo({top:0,behavior:"smooth"});return;}
     if(pick&&t!=="carte")endPick();
     location.hash=t;window.scrollTo({top:0});
+  }));
+  document.querySelectorAll(".backbtn").forEach(btn=>btn.addEventListener("click",()=>{
+    visited.pop();const prev=visited.pop()||"programme";
+    if(pick)endPick();location.hash=prev;window.scrollTo({top:0});
   }));
   window.addEventListener("hashchange",()=>showTab(location.hash.slice(1)));
 
