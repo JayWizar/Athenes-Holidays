@@ -252,10 +252,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     <form class="giftform" id="giftForm">
       <div class="wizsub">Ajouter à ma liste</div>
       <label for="gTitle">Mon envie<input id="gTitle" maxlength="120" required placeholder="Ex. Un pull en laine, un livre de recettes…"></label>
-      <div class="giftrow">
-        <label for="gPrice">Prix environ<input id="gPrice" maxlength="30" placeholder="≈ 30 €"></label>
-        <label for="gLink">Lien (facultatif)<input id="gLink" type="url" maxlength="400" placeholder="https://…"></label>
-      </div>
+      <label for="gLink">Lien (facultatif)<input id="gLink" type="url" maxlength="400" placeholder="https://…"></label>
       <label for="gNote">Précisions (taille, couleur…)<input id="gNote" maxlength="200" placeholder="Taille M, plutôt bleu"></label>
       <div class="formactions"><button class="btn" type="submit" id="gSubmit">Ajouter à ma liste</button></div>
     </form>
@@ -275,6 +272,6 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="app.js?v=6"></script>
+<script src="app.js?v=7"></script>
 </body>
 </html>

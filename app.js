@@ -378,7 +378,7 @@ window.addEventListener("error",e=>{const n=document.getElementById("notice");if
         const mine=person===me,taken=!!g.takenBy&&!mine;
         const c=el("article","gift"+(taken?" taken":""));
         c.append(el("div","gt",g.title||"Sans titre"));
-        const bits=[g.price,g.note].filter(Boolean).join(" · ");if(bits)c.append(el("div","meta",bits));
+        if(g.note)c.append(el("div","meta",g.note));
         const u=g.link&&safeUrl(g.link);if(u){const a=el("a","link","Voir le produit ↗");a.href=u;a.target="_blank";a.rel="noopener noreferrer";c.append(a);}
         const act=el("div","actions");
         if(mine){
@@ -404,8 +404,8 @@ window.addEventListener("error",e=>{const n=document.getElementById("notice");if
     ev.preventDefault();if(!fs||!me)return;
     const t=$("gTitle").value.trim();if(!t)return;const lk=$("gLink").value.trim();
     $("gSubmit").disabled=true;
-    try{await fs.collection("gifts").add({owner:me,title:t,price:$("gPrice").value.trim(),link:lk&&safeUrl(lk)?lk:"",note:$("gNote").value.trim(),takenBy:"",createdAt:new Date().toISOString()});
-      ["gTitle","gPrice","gLink","gNote"].forEach(i=>$(i).value="");toast("Ajouté à ta liste 🎄");}
+    try{await fs.collection("gifts").add({owner:me,title:t,link:lk&&safeUrl(lk)?lk:"",note:$("gNote").value.trim(),takenBy:"",createdAt:new Date().toISOString()});
+      ["gTitle","gLink","gNote"].forEach(i=>$(i).value="");toast("Ajouté à ta liste 🎄");}
     catch(e){console.error(e);toast("Ajout impossible. Les règles Firestore sont-elles à jour ?");}
     $("gSubmit").disabled=false;
   });
