@@ -271,7 +271,11 @@ const FIREBASE_CONFIG = {
   function initMap(){
     if(typeof L==="undefined"){$("map").textContent="La carte n'a pas pu se charger.";return;}
     map=L.map("map",{scrollWheelZoom:false,tap:true}).setView([37.9755,23.7348],12);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(map);
+    const attr='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/attributions">CARTO</a>';
+    const mq=window.matchMedia?window.matchMedia("(prefers-color-scheme: dark)"):null;
+    const tiles=dark=>L.tileLayer("https://{s}.basemaps.cartocdn.com/"+(dark?"dark_all":"rastertiles/voyager")+"/{z}/{x}/{y}{r}.png",{maxZoom:20,subdomains:"abcd",attribution:attr});
+    let base=tiles(mq&&mq.matches).addTo(map);
+    if(mq&&mq.addEventListener)mq.addEventListener("change",e=>{map.removeLayer(base);base=tiles(e.matches).addTo(map);});
     layer=L.layerGroup().addTo(map);
     map.on("click",e=>{if(!pick)return;setDraft(e.latlng.lat,e.latlng.lng);});
   }
