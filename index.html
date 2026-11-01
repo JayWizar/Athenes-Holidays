@@ -186,6 +186,13 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .mini .mt{font-weight:600;min-width:0;overflow-wrap:anywhere}
 .mini .ms{font-size:13px;color:var(--muted);white-space:nowrap}
 .card.flash{border-color:var(--aegean);box-shadow:0 0 0 3px var(--aegean-soft)}
+.results{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface)}
+.result{all:unset;box-sizing:border-box;cursor:pointer;padding:10px 12px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:2px}
+.result:first-child{border-top:0}
+.result:hover,.result:focus-visible{background:var(--aegean-soft)}
+.result b{font-weight:600;color:var(--ink)}
+.result span{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+.pickhelp{margin:0;font-size:12px;color:var(--muted)}
 </style>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.min.css">
 </head>
@@ -248,9 +255,11 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
       <div class="picktitle" id="pickTitle">Touche la carte pour placer le lieu</div>
       <form class="picksearch" id="pickSearch">
         <label for="pickQuery" class="sr">Chercher une adresse</label>
-        <input id="pickQuery" placeholder="Chercher une adresse ou un lieu">
-        <button class="btn small" type="submit">Chercher</button>
+        <input id="pickQuery" placeholder="Nom du lieu, adresse ou lien Google Maps">
+        <button class="btn small" type="submit" id="pickGo">Chercher</button>
       </form>
+      <div class="results" id="pickResults" hidden></div>
+      <p class="pickhelp">Astuce : dans Google Maps, appuie longuement sur l'endroit, copie les coordonnées (ex. 37.9715, 23.7257) ou le lien « Partager », et colle-les ici.</p>
       <div class="pickactions">
         <button type="button" class="btn small" id="pickSave" disabled>Valider cet endroit</button>
         <button type="button" class="btn ghost small" id="pickCancel">Annuler</button>
@@ -302,6 +311,6 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.min.js"></script>
-<script src="app.js?v=8"></script>
+<script src="app.js?v=9"></script>
 </body>
 </html>

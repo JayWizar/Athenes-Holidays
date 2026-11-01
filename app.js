@@ -336,16 +336,46 @@ window.addEventListener("error",e=>{const n=document.getElementById("notice");if
     const cur=target.kind==="trip"?{lat:trip.stayLat,lng:trip.stayLng}:plans.find(x=>x.id===target.id)||{};
     if(hasPos(cur))setTimeout(()=>{map.resize();setDraft(cur.lat,cur.lng);map.jumpTo({center:[cur.lng,cur.lat],zoom:15});},80);
   }
-  function endPick(){pick=null;$("pickBar").hidden=true;if(draftMarker){draftMarker.remove();draftMarker=null;}}
+  function endPick(){pick=null;$("pickBar").hidden=true;$("pickResults").hidden=true;if(draftMarker){draftMarker.remove();draftMarker=null;}}
   $("pickCancel").onclick=endPick;
+  // Lecture de coordonnées ou d'un lien Google Maps collé
+  function parseCoords(q){
+    const pats=[/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/,/@(-?\d+\.\d+),(-?\d+\.\d+)/,/[?&](?:q|query|ll|center|destination)=(-?\d+\.\d+)(?:,|%2C)\s*(-?\d+\.\d+)/i,/^\s*(-?\d{1,2}\.\d+)\s*[, ]\s*(-?\d{1,3}\.\d+)\s*$/];
+    for(const re of pats){const m=q.match(re);if(m){const lat=+m[1],lng=+m[2];if(Math.abs(lat)<=90&&Math.abs(lng)<=180)return {lat,lng};}}
+    return null;
+  }
+  function placeQuery(q){const m=q.match(/\/maps\/place\/([^/@?]+)/);return m?decodeURIComponent(m[1].replace(/\+/g," ")):null;}
+  function pickResult(r){setDraft(r.lat,r.lng);map.jumpTo({center:[r.lng,r.lat],zoom:16});$("pickResults").hidden=true;}
+  function showResults(list){
+    const box=$("pickResults");box.replaceChildren();
+    list.forEach(r=>{const b=el("button","result");b.type="button";b.append(el("b",null,r.name),el("span",null,r.sub||""));b.onclick=()=>pickResult(r);box.append(b);});
+    box.hidden=!list.length;
+  }
+  async function photon(q){
+    const u="https://photon.komoot.io/api/?limit=6&lang=fr&lat=37.9755&lon=23.7348&location_bias_scale=0.3&bbox=23.3,37.6,24.2,38.3&q="+encodeURIComponent(q);
+    const j=await (await fetch(u)).json();
+    return (j.features||[]).map(f=>{const p=f.properties||{},c=f.geometry.coordinates;
+      const sub=[p.street&&(p.street+(p.housenumber?" "+p.housenumber:"")),p.district||p.locality,p.city].filter(Boolean).join(", ");
+      return {name:p.name||p.street||q,sub,lat:c[1],lng:c[0]};});
+  }
+  async function nominatim(q){
+    const u="https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&accept-language=fr&countrycodes=gr&viewbox=23.3,38.3,24.2,37.6&q="+encodeURIComponent(q);
+    const j=await (await fetch(u)).json();
+    return j.map(r=>({name:(r.name||r.display_name.split(",")[0]),sub:r.display_name.split(",").slice(1,4).join(",").trim(),lat:+r.lat,lng:+r.lon}));
+  }
   $("pickSearch").addEventListener("submit",async e=>{
-    e.preventDefault();const q=$("pickQuery").value.trim();if(!q)return;
-    try{
-      const r=await fetch("https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&accept-language=fr&viewbox=23.45,38.20,24.10,37.70&q="+encodeURIComponent(q+", Attique, Grèce"));
-      const j=await r.json();
-      if(!j.length){toast("Adresse introuvable : essaie un autre nom, ou touche la carte.");return;}
-      const lat=+j[0].lat,lng=+j[0].lon;setDraft(lat,lng);map.jumpTo({center:[lng,lat],zoom:16});
-    }catch(err){toast("Recherche impossible : touche directement la carte.");}
+    e.preventDefault();let q=$("pickQuery").value.trim();if(!q)return;
+    const c=parseCoords(q);
+    if(c){pickResult(c);toast("Position récupérée 📍");return;}
+    if(/maps\.app\.goo\.gl|goo\.gl\/maps/i.test(q)){toast("Ce lien court ne contient pas la position : copie plutôt les coordonnées (appui long dans Google Maps), ou tape le nom du lieu.");return;}
+    const pq=placeQuery(q);if(pq)q=pq;
+    $("pickGo").disabled=true;$("pickGo").textContent="…";
+    let list=[];
+    try{list=await photon(q);}catch(err){}
+    if(!list.length){try{list=await nominatim(q);}catch(err){}}
+    $("pickGo").disabled=false;$("pickGo").textContent="Chercher";
+    if(!list.length){showResults([]);toast("Rien trouvé. Essaie le nom de la rue, colle les coordonnées Google Maps, ou touche la carte.");return;}
+    if(list.length===1)pickResult(list[0]);else{showResults(list);map.jumpTo({center:[list[0].lng,list[0].lat],zoom:14});}
   });
   $("pickSave").onclick=async()=>{
     if(!pick||typeof pick.lat!=="number")return;
